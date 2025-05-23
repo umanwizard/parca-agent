@@ -416,6 +416,7 @@ func mainWithExitCode() flags.ExitCode {
 				}
 			} else {
 				uprobeLinks = append(uprobeLinks, link)
+				log.Printf("Attached to cuda at %s")
 			}
 		}
 		if len(uprobeLinks) == 0 {
