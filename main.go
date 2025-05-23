@@ -412,11 +412,12 @@ func mainWithExitCode() flags.ExitCode {
 				if errors.Is(err, os.ErrNotExist) {
 					log.Debug("Failed to attach to libcuda: %v", err)
 				} else {
-					return flags.Failure("Failed to attach to libcuda: %v", err)
+					// XXX - should we keep trying other locations here?
+					return flags.Failure("Failed to attach to libcuda at %s: %v", loc, err)
 				}
 			} else {
 				uprobeLinks = append(uprobeLinks, link)
-				log.Printf("Attached to cuda at %s")
+				log.Printf("Attached to cuda at %s", loc)
 			}
 		}
 		if len(uprobeLinks) == 0 {
