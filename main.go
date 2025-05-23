@@ -361,6 +361,7 @@ func mainWithExitCode() flags.ExitCode {
 		ProbabilisticInterval:  f.Profiling.ProbabilisticInterval,
 		ProbabilisticThreshold: f.Profiling.ProbabilisticThreshold,
 		CollectCustomLabels:    f.CollectCustomLabels,
+		InstrumentCudaLaunch:   f.InstrumentCudaLaunch,
 		OffCPUThreshold:        uint32(f.OffCPUThreshold),
 	})
 	if err != nil {
