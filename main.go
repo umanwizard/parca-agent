@@ -24,6 +24,7 @@ import (
 	_ "github.com/KimMachineGun/automemlimit"
 	"github.com/apache/arrow/go/v16/arrow/memory"
 	"github.com/armon/circbuf"
+	"github.com/cilium/ebpf/link"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -59,6 +60,10 @@ var (
 	commit  string
 	date    string
 	goArch  string
+	// These are handles for uprobes (currently only in libcuda; possibly other places in the future)
+	// which are supposed to live for the entire lifetime of the parca-agent process.
+	// We store them in a global variable here to prevent them from being finalized (which would uninstall the uprobe) 
+	uprobeLinks   []link.Link
 )
 
 type buildInfo struct {
@@ -397,6 +402,25 @@ func mainWithExitCode() flags.ExitCode {
 
 	if err := trc.AttachSchedMonitor(); err != nil {
 		return flags.Failure("Failed to attach scheduler monitor: %v", err)
+	}
+
+	tryCudaLocations := []string{"/usr/lib/x86_64-linux-gnu/libcuda.so"}
+	if f.InstrumentCudaLaunch {
+		for _, loc := range(tryCudaLocations) {
+			link, err := trc.AttachCuda(loc)
+			if err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					log.Debug("Failed to attach to libcuda: %v", err)
+				} else {
+					return flags.Failure("Failed to attach to libcuda: %v", err)
+				}
+			} else {
+				uprobeLinks = append(uprobeLinks, link)
+			}
+		}
+		if len(uprobeLinks) == 0 {
+			return flags.Failure("Didn't find any libcuda to attach to")
+		}
 	}
 
 	// This log line is used in our system tests to verify if that the agent has started. So if you
