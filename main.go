@@ -24,7 +24,6 @@ import (
 	_ "github.com/KimMachineGun/automemlimit"
 	"github.com/apache/arrow/go/v16/arrow/memory"
 	"github.com/armon/circbuf"
-	"github.com/cilium/ebpf/link"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
