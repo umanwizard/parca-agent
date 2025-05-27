@@ -63,7 +63,7 @@ var (
 	// These are handles for uprobes (currently only in libcuda; possibly other places in the future)
 	// which are supposed to live for the entire lifetime of the parca-agent process.
 	// We store them in a global variable here to prevent them from being finalized (which would uninstall the uprobe) 
-	uprobeLinks   []link.Link
+	attachments   []tracer.CudaAttachment
 )
 
 type buildInfo struct {
@@ -407,7 +407,7 @@ func mainWithExitCode() flags.ExitCode {
 	tryCudaLocations := []string{"/usr/lib/x86_64-linux-gnu/libcuda.so"}
 	if f.InstrumentCudaLaunch {
 		for _, loc := range(tryCudaLocations) {
-			link, err := trc.AttachCuda(loc)
+			a, err := trc.AttachCuda(loc)
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
 					log.Debug("Failed to attach to libcuda: %v", err)
@@ -416,11 +416,11 @@ func mainWithExitCode() flags.ExitCode {
 					return flags.Failure("Failed to attach to libcuda at %s: %v", loc, err)
 				}
 			} else {
-				uprobeLinks = append(uprobeLinks, link)
+				attachments = append(attachments, *a)
 				log.Printf("Attached to cuda at %s", loc)
 			}
 		}
-		if len(uprobeLinks) == 0 {
+		if len(attachments) == 0 {
 			return flags.Failure("Didn't find any libcuda to attach to")
 		}
 	}
