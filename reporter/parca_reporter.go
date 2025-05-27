@@ -262,6 +262,12 @@ func (r *ParcaReporter) ReportTraceEvent(trace *libpf.Trace,
 		r.sampleWriter.SampleUnit.AppendString("nanoseconds")
 		r.sampleWriter.PeriodType.AppendString("samples")
 		r.sampleWriter.PeriodUnit.AppendString("count")
+	case support.TraceOriginCuda:
+		r.sampleWriter.Value.Append(meta.OffTime)
+		r.sampleWriter.SampleType.AppendString("wallclock")
+		r.sampleWriter.SampleUnit.AppendString("nanoseconds")
+		r.sampleWriter.PeriodType.AppendString("samples")
+		r.sampleWriter.PeriodUnit.AppendString("count")
 	}
 
 	return nil
