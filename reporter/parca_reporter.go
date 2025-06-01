@@ -235,7 +235,7 @@ func (r *ParcaReporter) ReportTraceEvent(trace *libpf.Trace,
 			log.Warnf("ignoring non-UTF8 label: %s", hex.EncodeToString([]byte(k)))
 			continue
 		}
-		v, ok := maybeFixTruncation(v, support.CustomLabelMaxValLen - 1)
+		v, ok := maybeFixTruncation(v, support.CustomLabelMaxValLen-1)
 		if !ok {
 			log.Warnf("ignoring non-UTF8 value for label %s: %s", k, hex.EncodeToString([]byte(v)))
 			continue
@@ -263,6 +263,7 @@ func (r *ParcaReporter) ReportTraceEvent(trace *libpf.Trace,
 		r.sampleWriter.PeriodType.AppendString("samples")
 		r.sampleWriter.PeriodUnit.AppendString("count")
 	case support.TraceOriginCuda:
+		log.Info("reporting CUDA trace event")
 		r.sampleWriter.Value.Append(meta.OffTime)
 		r.sampleWriter.SampleType.AppendString("wallclock")
 		r.sampleWriter.SampleUnit.AppendString("nanoseconds")

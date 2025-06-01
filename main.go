@@ -24,6 +24,7 @@ import (
 	_ "github.com/KimMachineGun/automemlimit"
 	"github.com/apache/arrow/go/v16/arrow/memory"
 	"github.com/armon/circbuf"
+	"github.com/cilium/ebpf/link"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -62,7 +63,9 @@ var (
 	// These are handles for uprobes (currently only in libcuda; possibly other places in the future)
 	// which are supposed to live for the entire lifetime of the parca-agent process.
 	// We store them in a global variable here to prevent them from being finalized (which would uninstall the uprobe) 
-	attachments   []tracer.CudaAttachment
+	// attachments   []tracer.CudaAttachment
+	myU link.Link
+	myU2 link.Link
 )
 
 type buildInfo struct {
@@ -403,27 +406,6 @@ func mainWithExitCode() flags.ExitCode {
 		return flags.Failure("Failed to attach scheduler monitor: %v", err)
 	}
 
-	tryCudaLocations := []string{"/usr/lib/x86_64-linux-gnu/libcuda.so"}
-	if f.InstrumentCudaLaunch {
-		for _, loc := range(tryCudaLocations) {
-			a, err := trc.AttachCuda(loc)
-			if err != nil {
-				if errors.Is(err, os.ErrNotExist) {
-					log.Debug("Failed to attach to libcuda: %v", err)
-				} else {
-					// XXX - should we keep trying other locations here?
-					return flags.Failure("Failed to attach to libcuda at %s: %v", loc, err)
-				}
-			} else {
-				attachments = append(attachments, *a)
-				log.Printf("Attached to cuda at %s", loc)
-			}
-		}
-		if len(attachments) == 0 {
-			return flags.Failure("Didn't find any libcuda to attach to")
-		}
-	}
-
 	// This log line is used in our system tests to verify if that the agent has started. So if you
 	// change this log line update also the system test.
 	log.Printf("Attached sched monitor")
@@ -462,8 +444,14 @@ func mainWithExitCode() flags.ExitCode {
 		return flags.Failure("Failed to start map monitors: %v", err)
 	}
 
+	progs := trc.GetEbpfProgs()
+	p, ok := progs["btv"]
+	if !ok {
+		panic("no btv prog")
+	}
+
 	if _, err := tracehandler.Start(ctx, rep, trc.TraceProcessor(),
-		traceCh, intervals, traceHandlerCacheSize); err != nil {
+		traceCh, intervals, traceHandlerCacheSize, p); err != nil {
 		return flags.Failure("Failed to start trace handler: %v", err)
 	}
 
