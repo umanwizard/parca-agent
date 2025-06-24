@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"internal/cfg"
 	"io"
 	"net/http"
 	"net/http/pprof"
@@ -24,6 +25,7 @@ import (
 	_ "github.com/KimMachineGun/automemlimit"
 	"github.com/apache/arrow/go/v16/arrow/memory"
 	"github.com/armon/circbuf"
+	cebpf "github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 	"github.com/common-nighthawk/go-figure"
 	"github.com/prometheus/client_golang/prometheus"
@@ -444,10 +446,15 @@ func mainWithExitCode() flags.ExitCode {
 		return flags.Failure("Failed to start map monitors: %v", err)
 	}
 
-	progs := trc.GetEbpfProgs()
-	p, ok := progs["cuda_launch_shim"]
-	if !ok {
-		panic("no cuda_launch_shim prog")
+	var p *cebpf.Program
+
+	if f.InstrumentCudaLaunch {
+		progs := trc.GetEbpfProgs()
+		p2, ok := progs["cuda_launch_shim"]
+		if !ok {
+			panic("no cuda_launch_shim prog")
+		}
+		p = p2
 	}
 
 	if _, err := tracehandler.Start(ctx, rep, trc.TraceProcessor(),
