@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"internal/cfg"
 	"io"
 	"net/http"
 	"net/http/pprof"
