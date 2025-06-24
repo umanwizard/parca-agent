@@ -445,9 +445,9 @@ func mainWithExitCode() flags.ExitCode {
 	}
 
 	progs := trc.GetEbpfProgs()
-	p, ok := progs["btv"]
+	p, ok := progs["cuda_launch_shim"]
 	if !ok {
-		panic("no btv prog")
+		panic("no cuda_launch_shim prog")
 	}
 
 	if _, err := tracehandler.Start(ctx, rep, trc.TraceProcessor(),
